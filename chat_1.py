@@ -86,8 +86,6 @@ if uploaded_file is not None:
             max_count = count
             top_user = user
 
-   
-
     # ===== Messages per user chart =====
     users = list(d_0.keys())
     counts = list(d_0.values())
@@ -160,25 +158,75 @@ if uploaded_file is not None:
     st.markdown("</div>", unsafe_allow_html=True)
     st.markdown(f"<p style='color:white;font-size:18px'>Used {max_word_count} times</p>", unsafe_allow_html=True)
 
-    # ===== Timeline of messages =====
+    # ===== Timeline of messages - FIXED VERSION =====
+    st.subheader("🕒 Messages Over Time")
+    
+    # Debug: Show first few dates to help troubleshoot
+    with st.expander("🔍 Debug Info - Click to see date formats"):
+        st.write("**First 3 message timestamps from your file:**")
+        for i in range(min(3, len(user_data))):
+            st.write(f"Date: `{user_data[i][0]}`, Time: `{user_data[i][1]}`")
+    
     timeline_data = []
+    failed_parses = 0
+
     for u in user_data:
-        dt = datetime.strptime(u[0] + ' ' + u[1], "%d/%m/%Y %I:%M %p")
-        timeline_data.append(dt)
+        date_str = u[0] + ' ' + u[1]
+        parsed = False
+        
+        # Try multiple date formats
+        formats = [
+            "%d/%m/%Y %I:%M %p",  # 31/12/2024 10:30 PM
+            "%d/%m/%y %I:%M %p",  # 31/12/24 10:30 PM
+            "%m/%d/%Y %I:%M %p",  # 12/31/2024 10:30 PM
+            "%m/%d/%y %I:%M %p",  # 12/31/24 10:30 PM
+            "%d/%m/%Y %H:%M",     # 31/12/2024 22:30
+            "%m/%d/%Y %H:%M",     # 12/31/2024 22:30
+            "%d/%m/%y %H:%M",     # 31/12/24 22:30
+            "%m/%d/%y %H:%M",     # 12/31/24 22:30
+        ]
+        
+        for fmt in formats:
+            try:
+                dt = datetime.strptime(date_str, fmt)
+                timeline_data.append(dt)
+                parsed = True
+                break
+            except ValueError:
+                continue
+        
+        if not parsed:
+            failed_parses += 1
 
-    # Count messages per hour manually
-    timeline_count_dict = {}
-    for dt in timeline_data:
-        dt_hour = dt.replace(minute=0, second=0, microsecond=0)
-        if dt_hour in timeline_count_dict:
-            timeline_count_dict[dt_hour] += 1
-        else:
-            timeline_count_dict[dt_hour] = 1
+    # Show warning if dates couldn't be parsed
+    if failed_parses > 0:
+        st.warning(f"⚠️ Could not parse {failed_parses} message timestamps. Timeline may be incomplete.")
 
-    sorted_times = sorted(timeline_count_dict.keys())
-    timeline_counts = [timeline_count_dict[t] for t in sorted_times]
+    # Only create chart if we have data
+    if len(timeline_data) > 0:
+        # Count messages per hour manually
+        timeline_count_dict = {}
+        for dt in timeline_data:
+            dt_hour = dt.replace(minute=0, second=0, microsecond=0)
+            if dt_hour in timeline_count_dict:
+                timeline_count_dict[dt_hour] += 1
+            else:
+                timeline_count_dict[dt_hour] = 1
 
-    fig_timeline = px.line(x=sorted_times, y=timeline_counts, markers=True,
-                           title="🕒 Messages Over Time", template="plotly_dark")
-    fig_timeline.update_layout(xaxis_title="Time", yaxis_title="Number of Messages")
-    st.plotly_chart(fig_timeline, use_container_width=True)
+        sorted_times = sorted(timeline_count_dict.keys())
+        timeline_counts = [timeline_count_dict[t] for t in sorted_times]
+
+        fig_timeline = px.line(x=sorted_times, y=timeline_counts, markers=True,
+                               title="🕒 Messages Over Time", template="plotly_dark")
+        fig_timeline.update_layout(
+            xaxis_title="Time", 
+            yaxis_title="Number of Messages",
+            height=400,  # Fixed height for better mobile display
+            hovermode='x unified'
+        )
+        st.plotly_chart(fig_timeline, use_container_width=True)
+        
+        # Show stats
+        st.info(f"✅ Successfully parsed {len(timeline_data)} messages for timeline visualization")
+    else:
+        st.error("❌ Could not create timeline - date format not recognized. Please check the debug info above and ensure your WhatsApp export format is supported.")
