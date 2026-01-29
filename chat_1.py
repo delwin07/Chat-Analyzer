@@ -4,9 +4,8 @@ import string
 from datetime import datetime
 import plotly.express as px
 
-# -------------------------------
 # Streamlit Page Config
-# -------------------------------
+
 st.set_page_config(page_title="Chat Analyzer", layout="wide")
 
 st.title("🪄 CHAT-ANALYZER")
@@ -16,9 +15,9 @@ uploaded_file = st.file_uploader("🧛 Upload your file here (txt only)", type="
 placeholder = st.empty()
 
 if uploaded_file is not None:
-    # -------------------------------
+   
     # Loading animation
-    # -------------------------------
+    
     placeholder.markdown("""
         <style>
         .blink {
@@ -38,9 +37,9 @@ if uploaded_file is not None:
     placeholder.empty()
     st.success("Upload completed ✅")
 
-    # =====================================================
+   
     # YOUR ORIGINAL + FIXED CHAT PARSER (INTEGRATED)
-    # =====================================================
+    
     cnt = uploaded_file.read().decode("utf-8").splitlines()
 
     sys = []   # system messages
@@ -71,9 +70,9 @@ if uploaded_file is not None:
             elif s == 0 and u == 1 and usr:
                 usr[-1] += ' ' + i.strip()
 
-    # -------------------------------
+    
     # Convert to structured tuples
-    # -------------------------------
+   
     system_data = []
     user_data = []
 
@@ -112,18 +111,17 @@ if uploaded_file is not None:
 
         system_data.append((date, time_, content))
 
-    # -------------------------------
     # Display parsed messages
-    # -------------------------------
+    
     with st.expander("📄 User Messages"):
         st.write(user_data)
 
     with st.expander("⚙️ System Messages"):
         st.write(system_data)
 
-    # =====================================================
+   
     # MOST INTERACTIVE USER (DICTIONARY METHOD — YOUR WAY)
-    # =====================================================
+    
     d_0 = {}
     for _, _, username, _ in user_data:
         if username in d_0:
@@ -138,9 +136,9 @@ if uploaded_file is not None:
             max_count = count
             top_user = name
 
-    # -------------------------------
+    
     # Messages per user chart
-    # -------------------------------
+    
     users = list(d_0.keys())
     counts = list(d_0.values())
 
@@ -156,9 +154,9 @@ if uploaded_file is not None:
     fig.update_traces(textposition="outside")
     st.plotly_chart(fig, use_container_width=True)
 
-    # -------------------------------
+   
     # Top user badge
-    # -------------------------------
+    
     st.subheader("👑 Most Interactive User")
     st.markdown(f"""
         <div style="background-color:#ffcc00;padding:15px;border-radius:10px;text-align:center">
@@ -168,9 +166,9 @@ if uploaded_file is not None:
         </div>
     """, unsafe_allow_html=True)
 
-    # =====================================================
+    
     # MOST USED WORDS (MEDIA IGNORED, NO COUNTER)
-    # =====================================================
+    
     stop_words = {
         "a","as","an","the","am","is","are","was","were","be","been","being",
         "i","me","my","mine","myself","you","your","yours",
@@ -221,9 +219,9 @@ if uploaded_file is not None:
         elif count == max_word_count:
             most_used_words.append(word)
 
-    # -------------------------------
+   
     # Display most used words
-    # -------------------------------
+    
     st.subheader("📝 Most Used Word(s)")
     st.markdown("<div style='display:flex;flex-wrap:wrap'>", unsafe_allow_html=True)
     for w in most_used_words:
@@ -234,9 +232,8 @@ if uploaded_file is not None:
     st.markdown("</div>", unsafe_allow_html=True)
     st.write(f"Used **{max_word_count} times**")
 
-    # =====================================================
     # TIMELINE (NO PANDAS)
-    # =====================================================
+    
     st.subheader("🕒 Messages Over Time")
 
     timeline = []
